@@ -11,7 +11,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 app.use(cors())
 
-mongoose.connect('mongodb+srv://paymentHospital:paymentHospital@cluster0.klesg.mongodb.net/myFirstDatabase?retryWrites=true&w=majority')
+mongoose.connect('')
 .then(() => console.log('db connected'))
 .catch(err => console.log(err.message))
 
@@ -146,8 +146,29 @@ app.post('/checkout', async(req,res) => {
 app.post('/return/:id',async(req,res)=>{
     const id = req.params.id
     const medDetails = await MedPurchased.findById(id)
-    // ex id: 62333727c423b3b0fbf17baf
-    res.send(medDetails)
+    // ex id: 6241b3c76caa49ba82356e10
+    const PatientDetails = await PatientData.find({'UID':medDetails.UID})
+    res.send([medDetails, PatientDetails])
 })
+
+app.post('/returnMed',(req,res) => {
+    const { medArray } = req.body
+    console.log('in')
+
+    // console.log(medArray.cartItems)
+
+    medArray.cartItems.map(async(med, index) => {
+        const medicine = await Medicine.findById(med._id)
+        console.log('med completed',index)
+        medicine.quantity = medicine.quantity + parseInt(med.returnQuantity)
+        await medicine.save()
+    })
+
+
+    console.log('out')
+
+    res.send('done')
+})
+
 
 app.listen(process.env.PORT || 5000,() => console.log('running on port 5000'))
