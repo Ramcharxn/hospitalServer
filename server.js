@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 const PatientData = require('./models/PatientData')
 const Medicine = require('./models/Medicine')
 const MedPurchased = require('./models/MedPurchased')
+const MedRequest = require('./models/MedRequest')
 
 const app = express()
 
@@ -11,7 +12,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 app.use(cors())
 
-mongoose.connect('')
+mongoose.connect('mongodb+srv://paymentHospital:paymentHospital@cluster0.klesg.mongodb.net/myFirstDatabase?retryWrites=true&w=majority')
 .then(() => console.log('db connected'))
 .catch(err => console.log(err.message))
 
@@ -169,6 +170,25 @@ app.post('/returnMed',(req,res) => {
 
     res.send('done')
 })
+
+app.post('/medRequest',async(req,res) => {
+    const { cartItems } = req.body
+    console.log(cartItems)
+
+    cartItems.map(async (item) => {
+        medName = item.medName
+        requiredQty = item.requiredQty
+        const data = new MedRequest({
+            medName, requiredQty
+        })
+
+        await data.save()
+    })
+
+    res.send('done')
+})
+
+
 
 
 app.listen(process.env.PORT || 5000,() => console.log('running on port 5000'))
