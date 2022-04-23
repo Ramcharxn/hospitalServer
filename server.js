@@ -12,7 +12,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 app.use(cors())
 
-mongoose.connect('mongodb+srv://paymentHospital:paymentHospital@cluster0.klesg.mongodb.net/myFirstDatabase?retryWrites=true&w=majority')
+mongoose.connect('')
 .then(() => console.log('db connected'))
 .catch(err => console.log(err.message))
 
@@ -172,14 +172,16 @@ app.post('/returnMed',(req,res) => {
 })
 
 app.post('/medRequest',async(req,res) => {
-    const { cartItems } = req.body
-    console.log(cartItems)
+    const { products } = req.body
+    console.log(products)
 
-    cartItems.map(async (item) => {
+    products.map(async (item) => {
+        console.log(item.checked)
         medName = item.medName
         requiredQty = item.requiredQty
+        checked = item.checked
         const data = new MedRequest({
-            medName, requiredQty
+            medName, requiredQty, checked
         })
 
         await data.save()
@@ -189,7 +191,7 @@ app.post('/medRequest',async(req,res) => {
 })
 
 app.get('/medRequired',async(req,res) => {
-    const data = await MedRequest.find()
+    const data = await MedRequest.find({'checked': 'false'})
     res.send(data)
 })
 
