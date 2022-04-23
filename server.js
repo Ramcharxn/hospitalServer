@@ -188,6 +188,11 @@ app.post('/medRequest',async(req,res) => {
     res.send('done')
 })
 
+app.get('/medRequired',async(req,res) => {
+    const data = await MedRequest.find()
+    res.send(data)
+})
+
 
 
 
