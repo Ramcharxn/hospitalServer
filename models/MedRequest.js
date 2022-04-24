@@ -15,6 +15,11 @@ const medRequest = new Schema({
         type:String,
         required: true
     },
+    sent:{
+        type:String,
+        required: true,
+        default: false
+    },
 })
 
 module.exports = mongoose.model('medRequest', medRequest)

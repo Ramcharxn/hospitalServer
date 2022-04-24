@@ -195,7 +195,31 @@ app.get('/medRequired',async(req,res) => {
     res.send(data)
 })
 
+app.get('/store',async(req,res) => {
+    const data = await MedRequest.find({
+        $and: [
+            {'checked': 'true'},
+            {'sent': 'false'}
+        ]
+    })
+    res.send(data)
+})
 
+app.post('/medSent',async(req,res) => {
+    const {product} = req.body
+    
+    await product.map(async d => {
+        if(d.sent === true) {
+            const ID = d._id
+            const prod = await MedRequest.findById(ID)
+            prod.sent = 'true'
+            await prod.save()
+        }
+    })
+
+    const data2 = await MedRequest.find({'sent': 'false'})
+    res.send(data2)
+})
 
 
 app.listen(process.env.PORT || 5000,() => console.log('running on port 5000'))
