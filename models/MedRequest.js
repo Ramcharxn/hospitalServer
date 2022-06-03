@@ -8,7 +8,7 @@ const medRequest = new Schema({
         required: true
     },
     requiredQty:{
-        type:String,
+        type:Number,
         required: true
     },
     checked:{
@@ -19,6 +19,11 @@ const medRequest = new Schema({
         type:String,
         required: true,
         default: false
+    },
+    qtySent:{
+        type:Number,
+        required: false,
+        default: 0
     },
 })
 

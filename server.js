@@ -177,20 +177,33 @@ app.post('/medRequest',async(req,res) => {
 
     products.map(async (item) => {
         console.log(item.checked)
-        medName = item.medName
-        requiredQty = item.requiredQty
-        checked = item.checked
-        const data = new MedRequest({
-            medName, requiredQty, checked
-        })
+        // medName = item.medName
+        // requiredQty = item.requiredQty
+        // checked = item.checked
+        // const data = new MedRequest({
+        //     medName, requiredQty, checked
+        // })
 
-        await data.save()
+        const present = await MedRequest.findById(item._id)
+        console.log('data is present',present)
+        if (present == null){
+            medName = item.medName
+            requiredQty = item.requiredQty
+            checked = item.checked
+            const data = new MedRequest({
+                medName, requiredQty, checked
+            })
+            await data.save()
+        } else {
+            present.checked = true
+            await present.save()
+        }
     })
 
     res.send('done')
 })
 
-app.get('/medRequired',async(req,res) => {
+app.post('/medRequired',async(req,res) => {
     const data = await MedRequest.find({'checked': 'false'})
     res.send(data)
 })
@@ -199,7 +212,8 @@ app.get('/store',async(req,res) => {
     const data = await MedRequest.find({
         $and: [
             {'checked': 'true'},
-            {'sent': 'false'}
+            // {'sent': 'false'}
+            {'requiredQty': {$gt : 0}}
         ]
     })
     res.send(data)
@@ -212,13 +226,25 @@ app.post('/medSent',async(req,res) => {
         if(d.sent === true) {
             const ID = d._id
             const prod = await MedRequest.findById(ID)
+            if(prod.qtySent > 0){
+                prod.qtySent = prod.qtySent + parseInt(d.qty)
+            } else {
+                prod.qtySent = d.qty
+            }
             prod.sent = 'true'
+            prod.requiredQty = prod.requiredQty-d.qty
             await prod.save()
         }
     })
 
     const data2 = await MedRequest.find({'sent': 'false'})
     res.send(data2)
+})
+
+
+app.post("/medReceived",async(req,res) => {
+    const data = await MedRequest.find({'sent': 'true'})
+    res.send(data)
 })
 
 
