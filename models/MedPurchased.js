@@ -13,6 +13,11 @@ const Purchased = new Schema({
     service:{
         type: Number,
         required: true
+    },
+    Date:{
+        type: Date,
+        required: true,
+        default: Date.now()
     }
 })
 

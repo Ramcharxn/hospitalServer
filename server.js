@@ -5,6 +5,7 @@ const PatientData = require('./models/PatientData')
 const Medicine = require('./models/Medicine')
 const MedPurchased = require('./models/MedPurchased')
 const MedRequest = require('./models/MedRequest')
+const Store = require('./models/Store')
 
 const app = express()
 
@@ -57,10 +58,10 @@ app.post('/getPatientData',async(req,res) => {
 })
 
 app.post('/medicine',async(req,res) => {
-    const {medName, expDate, quantity, MRP, tax, price} = req.body
+    const {medName, batch, expDate, quantity, MRP, tax, price} = req.body
 
     const medicine = new Medicine({
-        medName, expDate, quantity, MRP, tax, price
+        medName, batch, expDate, quantity, MRP, tax, price
     })
 
     await medicine.save()
@@ -69,9 +70,11 @@ app.post('/medicine',async(req,res) => {
 })
 
 app.post('/getMed',async(req,res) => {
-    const { medName } = req.body
+    const { medID } = req.body
 
-    const medicine = await Medicine.find({'medName': medName})
+    console.log(medID)
+    const medicine = await Medicine.findById(medID)
+    console.log(medicine)
     if (medicine.length === 0){
         // console.log('no such med')
         res.send('No such medicine')
@@ -102,24 +105,29 @@ app.post('/medReq/:id',async(req,res) => {
 app.post('/checkout', async(req,res) => {
     const { UID, cartItems, service } = req.body
     // console.log('UIDDDDD',UID)
-    console.log('CARTITEMSSSS',cartItems)
+    // console.log('CARTITEMSSSS',cartItems)
 
     cartItems.map(async m => {
-        console.log('%%%%%%%%%%%%%%%%')
-        console.log(m.medName)
+        // console.log('%%%%%%%%%%%%%%%%')
+        // console.log(m.medName)
 
-        var medQuantity = await Medicine.find({'medName': m.medName})
+        var medQuantity = await Medicine.findById(m._id)
+        console.log('medQUantity',m.quantity, m.qty)
         // console.log('medQuantity',medQuantity)
-        console.log(medQuantity[0].quantity - parseInt(m.qty))
+        // console.log(medQuantity.quantity - parseInt(m.qty))
         // console.log('medQuantity',medQuantity)
-        if ((medQuantity[0].quantity - parseInt(m.qty)) < 0) {
+        if ((medQuantity.quantity - parseInt(m.qty)) < 0) {
             console.log(`${m.medName} has only ${m.quantity} medicines left but more medicnie are requested`)
             res.send(`${m.medName} has only ${m.quantity} medicines left but more medicnie are requested`)
         
         } else {
             try {
-                medQuantity[0].quantity = medQuantity[0].quantity - parseInt(m.qty)
-                await medQuantity[0].save()
+                medQuantity.quantity = medQuantity.quantity - parseInt(m.qty)
+                if(medQuantity.quantity == 0){
+                    await Medicine.findByIdAndDelete(medQuantity._id)
+                } else {
+                    await medQuantity.save()
+                }
             }
             catch(err) {console.log(err)}
 
@@ -131,7 +139,7 @@ app.post('/checkout', async(req,res) => {
         
             await MedItems.save()
         
-            console.log('successfully Checked Out')
+            // console.log('successfully Checked Out')
             res.send('successfully Checked Out')
             }
     })
@@ -216,35 +224,147 @@ app.get('/store',async(req,res) => {
             {'requiredQty': {$gt : 0}}
         ]
     })
+
+    // data.map(d => {
+    //     var medname = d.medname
+    //     var reqQuantity = d.reqQuantity
+    //     var sent = d.sent
+    //     var qtySent = d.qtySent
+    //     var batch = d.batch
+    //     var MRP = d.MRP
+    //     var tax = d.tax
+    //     var price = d.price
+
+    //     const product = new Store({
+    //         medname, reqQuantity, sent, qtySent, batch, MRP, tax, price
+    //     })
+
+    //     await product.save()
+    // })
+
     res.send(data)
 })
 
 app.post('/medSent',async(req,res) => {
-    const {product} = req.body
-    
-    await product.map(async d => {
-        if(d.sent === true) {
-            const ID = d._id
-            const prod = await MedRequest.findById(ID)
-            if(prod.qtySent > 0){
-                prod.qtySent = prod.qtySent + parseInt(d.qty)
-            } else {
-                prod.qtySent = d.qty
-            }
-            prod.sent = 'true'
-            prod.requiredQty = prod.requiredQty-d.qty
-            await prod.save()
-        }
+
+    const {p, expireDate, MRP, tax, price, batch} = req.body
+
+    console.log(p)
+
+    const medName = p.medName
+    const qty = p.qty
+    const reqQuantity = p.requiredQty
+
+    const data = new Store({
+        medName, qtySent: qty, reqQuantity, expDate:expireDate, MRP, tax, price, batch
     })
 
-    const data2 = await MedRequest.find({'sent': 'false'})
-    res.send(data2)
+    const prod = await MedRequest.findById(p._id)
+console.log(prod.requiredQty)
+console.log(p.qty)
+    prod.requiredQty = prod.requiredQty-p.qty
+
+    console.log(prod.requiredQty)
+
+    await prod.save()
+
+    await data.save()
+
+    res.send('added')
+
+
+    // const {product} = req.body
+    
+    // await product.map(async d => {
+    //     if(d.sent === true) {
+    //         const ID = d._id
+    //         const prod = await MedRequest.findById(ID)
+    //         if(prod.qtySent > 0){
+    //             prod.qtySent = prod.qtySent + parseInt(d.qty)
+    //         } else {
+    //             prod.qtySent = d.qty
+    //         }
+    //         prod.sent = 'true'
+    //         prod.requiredQty = prod.requiredQty-d.qty
+    //         await prod.save()
+    //     }
+    // })
+
+    // const data2 = await MedRequest.find({'sent': 'false'})
+    // res.send(data2)
 })
 
 
 app.post("/medReceived",async(req,res) => {
-    const data = await MedRequest.find({'sent': 'true'})
-    res.send(data)
+
+   const data = await Store.find()
+   res.send(data)
+
+    // const data = await MedRequest.find({'sent': 'true'})
+    // data.map(d => {
+    //     console.log(d)
+    // })
+    // res.send(data)
+})
+
+app.post("/billDetails",async(req,res) => {
+    const {uid, afterDate, beforeDate} = req.body
+    console.log(uid, afterDate, beforeDate)
+    console.log(new Date(afterDate), '2022-06-04T13:24:56.678+00:00')
+    const data = await MedPurchased.find({
+        $and:[
+            {'UID':uid},
+            {'Date': {$gt : new Date(beforeDate)}},
+            {'Date': {$lt : new Date(afterDate)}},
+        ]}
+    )
+    console.log(data)
+    res.send('ok')
+})
+
+app.post("/deletedMedReq",async(req,res) => {
+    const {prod} = req.body
+    
+    await Store.findByIdAndDelete(prod._id)
+
+    // console.log(prod)
+
+    var medName = prod.medName
+    var batch = prod.batch
+    var expDate = prod.expDate
+    var quantity = prod.qtySent
+    var MRP = prod.MRP
+    var tax = prod.tax
+    var price = prod.price
+
+    var present = await Medicine.find({
+        $and:[
+            {'medName' : medName},
+            {'batch' : batch}
+        ]
+    })
+
+    // console.log('present',present)
+
+    if(present.length > 0){
+        var data = await Medicine.find({
+            $and:[
+                {'medName' : medName},
+                {'batch' : batch}
+            ]
+        })
+        // console.log(data[0].quantity)
+        data[0].quantity = data[0].quantity + quantity
+        await data[0].save()
+    } else {
+        var data2 = new Medicine({
+            medName, batch, quantity, MRP, tax, price, expDate
+        })
+    
+        await data2.save()
+    }
+    
+    res.send('ok')
 })
 
 
