@@ -107,7 +107,7 @@ app.post('/checkout', async(req,res) => {
     // console.log('UIDDDDD',UID)
     // console.log('CARTITEMSSSS',cartItems)
 
-    cartItems.map(async m => {
+    cartItems.map(async (m, i) => {
         // console.log('%%%%%%%%%%%%%%%%')
         // console.log(m.medName)
 
@@ -118,6 +118,7 @@ app.post('/checkout', async(req,res) => {
         // console.log('medQuantity',medQuantity)
         if ((medQuantity.quantity - parseInt(m.qty)) < 0) {
             console.log(`${m.medName} has only ${m.quantity} medicines left but more medicnie are requested`)
+            cartItems.splice(i,1)
             res.send(`${m.medName} has only ${m.quantity} medicines left but more medicnie are requested`)
         
         } else {
@@ -155,26 +156,50 @@ app.post('/checkout', async(req,res) => {
 app.post('/return/:id',async(req,res)=>{
     const id = req.params.id
     const medDetails = await MedPurchased.findById(id)
+    // console.log(medDetails)
     // ex id: 6241b3c76caa49ba82356e10
     const PatientDetails = await PatientData.find({'UID':medDetails.UID})
     res.send([medDetails, PatientDetails])
 })
 
-app.post('/returnMed',(req,res) => {
+app.post('/returnMed',async(req,res) => {
     const { medArray } = req.body
-    console.log('in')
+    // console.log('in')
 
-    // console.log(medArray.cartItems)
+    console.log('medARray', medArray)
 
     medArray.cartItems.map(async(med, index) => {
         const medicine = await Medicine.findById(med._id)
-        console.log('med completed',index)
+        
         medicine.quantity = medicine.quantity + parseInt(med.returnQuantity)
+
         await medicine.save()
     })
 
+    const medArrayInfo = await MedPurchased.findById(medArray._id)
 
-    console.log('out')
+    medArray.cartItems.map(async(med, index) => {
+        med.qty = parseInt(med.qty) - parseInt(med.returnQuantity)
+        console.log(med.qty)
+    })
+    
+
+    medArrayInfo.cartItems = medArray.cartItems
+
+    await medArrayInfo.save()
+
+
+    // await medArray.save()
+
+    medArray.cartItems.map(bill => {
+            console.log(bill.qty)
+    })
+
+    // await medBill.save()
+
+    // console.log('medBill',medBill)
+
+    // console.log('out')
 
     res.send('done')
 })
@@ -319,7 +344,7 @@ app.post("/billDetails",async(req,res) => {
         ]}
     )
     console.log(data)
-    res.send('ok')
+    res.send(data)
 })
 
 app.post("/deletedMedReq",async(req,res) => {
