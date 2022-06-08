@@ -10,10 +10,10 @@ const Purchased = new Schema({
         type: Object,
         required: true
     },
-    service:{
-        type: Number,
-        required: true
-    },
+    // service:{
+    //     type: Number,
+    //     required: true
+    // },
     Date:{
         type: Date,
         required: true,
