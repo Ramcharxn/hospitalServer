@@ -13,7 +13,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 app.use(cors())
 
-mongoose.connect('mongodb+srv://paymentHospital:paymentHospital@cluster0.klesg.mongodb.net/myFirstDatabase?retryWrites=true&w=majority')
+mongoose.connect('')
 .then(() => console.log('db connected'))
 .catch(err => console.log(err.message))
 
