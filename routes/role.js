@@ -21,4 +21,18 @@ router.post('/',async(req,res) => {
 
 })
 
+router.post('/unrole',async(req,res) => {
+    try{
+    const deleted = await User.findOneAndDelete({userId: req.body.userId})
+    console.log(deleted)
+    if(deleted == null){
+        res.send('userId doesnt exist')
+    } else {
+        res.send('user deleted')
+    }
+    } catch (err) {
+        res.send(err.message)
+    }
+})
+
 module.exports = router
