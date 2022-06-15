@@ -80,6 +80,7 @@ router.post('/medReq/:id',async(req,res) => {
 })
 
 router.post('/checkout', async(req,res) => {
+    console.log('inside checkout')
     const { UID, cartItems, service } = req.body
 
     cartItems.map(async (m, i) => {
